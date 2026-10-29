@@ -23,6 +23,7 @@ local tbl_isempty = vim.tbl_isempty
 local win_is_valid = vim.api.nvim_win_is_valid --- @type function
 local win_get_position = vim.api.nvim_win_get_position --- @type function
 local win_get_width = vim.api.nvim_win_get_width --- @type function
+local strwidth = vim.api.nvim_strwidth --- @type function
 
 local api = require('barbar.api')
 local bdelete = require('barbar.bbye').bdelete
@@ -286,7 +287,7 @@ function events.enable()
     --- @return integer total_width
     local function total_widths(side)
       local offset = 0
-      local win_separator_width = side == 'left' and 1 or 2 -- It looks better like this… don't ask me why
+      local win_separator_width = side == 'left' and 1 or 1
       for _, width in pairs(widths[side]) do
         offset = offset + width + win_separator_width
       end
@@ -324,7 +325,7 @@ function events.enable()
               if width ~= widths[ft] then
                 widths[side][ft] = width
                 widths[other_side][ft] = nil
-                api.set_offset(total_widths(side), nil, nil, side, option)
+                api.set_offset(total_widths(side) + strwidth(option.separator or ''), nil, nil, side, option)
               end
             end,
             group = augroup_render,
@@ -340,7 +341,7 @@ function events.enable()
             callback = function()
               if widths[side] then
                 widths[side][ft] = nil
-                api.set_offset(total_widths(side), nil, nil, side, {})
+                api.set_offset(total_widths(side) + strwidth(option.separator or ''), nil, nil, side, {})
               end
               pcall(del_autocmd, autocmd)
             end,

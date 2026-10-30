@@ -266,18 +266,6 @@ function events.enable()
   })
 
   if not tbl_isempty(config.options.sidebar_filetypes) then
-    --- The `middle` column of the screen
-    --- @type integer
-    local middle
-
-    --- Sets the `middle` of the screen
-    local function set_middle()
-      middle = rshift(get_option('columns'), 1) -- PERF: faster than math.floor(&columns / 2)
-    end
-
-    create_autocmd('VimResized', {callback = set_middle, group = augroup_misc})
-    set_middle()
-
     local widths = {
       left = {}, --- @type {[string]: nil|integer}
       right = {}, --- @type {[string]: nil|integer}
@@ -302,9 +290,13 @@ function events.enable()
 
     for ft, option in pairs(config.options.sidebar_filetypes) do
       create_autocmd('FileType', {
+        group = augroup_misc,
+        pattern = ft,
         callback = function(tbl)
           local bufwinid --- @type nil|integer
           local side --- @type side
+          local other_side --- @type side
+
           local autocmd = create_autocmd({'BufWinEnter', 'WinScrolled'}, {
             callback = function()
               if bufwinid == nil then
@@ -313,15 +305,22 @@ function events.enable()
               if not win_is_valid(bufwinid) then
                 return
               end
-              local col = win_get_position(bufwinid)[2]
-              local other_side
-              if col < middle then
-                side, other_side = 'left', 'right'
-              else
-                side, other_side = 'right', 'left'
-              end
 
               local width = win_get_width(bufwinid)
+              local row, col = table.unpack(win_get_position(bufwinid))
+
+              if row > 2 then
+                return
+              end
+
+              if col == 0 then
+                side, other_side = 'left', 'right'
+              elseif col + width == vim.o.columns then
+                side, other_side = 'right', 'left'
+              else
+                return
+              end
+
               if width ~= widths[ft] then
                 widths[side][ft] = width
                 widths[other_side][ft] = nil
@@ -349,8 +348,6 @@ function events.enable()
             once = true,
           })
         end,
-        group = augroup_misc,
-        pattern = ft,
       })
     end
   end

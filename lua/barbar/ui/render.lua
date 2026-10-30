@@ -371,9 +371,16 @@ local function generate_side_offset(side)
 
   local align = offset.align
   local hl = wrap_hl(offset.hl)
-  local text = " " .. offset.text .. " "
+  local text = ' ' .. offset.text .. ' '
   local width = offset.width
   local separator = offset.separator
+
+  -- add an extra space to be filed in by the separator
+  if (separator ~= '') then
+    text = side == 'left'
+      and text .. (' '):rep(strwidth(separator))
+      or (' '):rep(strwidth(separator)) .. text
+  end
 
   local max_content_width = width
   local content = nodes.slice_right({ { hl = hl, text = text } }, max_content_width)
@@ -395,9 +402,17 @@ local function generate_side_offset(side)
   end
 
   if (side =='left') then
-    content = nodes.insert_many(content, width - 1, {{text = separator, hl = HL.BUFFER_OFFSET_SEPARATOR}})
+    content = nodes.insert_many(
+      content,
+      width - strwidth(separator),
+      {{text = separator, hl = HL.BUFFER_OFFSET_SEPARATOR}}
+    )
   else
-    content = nodes.insert_many(content, 0, {{text = separator, hl = HL.BUFFER_OFFSET_SEPARATOR}})
+    content = nodes.insert_many(
+      content,
+      0,
+      {{text = separator, hl = HL.BUFFER_OFFSET_SEPARATOR}}
+    )
   end
 
   return nodes.to_string(content);

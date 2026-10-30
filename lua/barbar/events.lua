@@ -341,7 +341,7 @@ function events.enable()
             callback = function()
               if widths[side] then
                 widths[side][ft] = nil
-                api.set_offset(total_widths(side) + strwidth(option.separator or ''), nil, nil, side, {})
+                api.set_offset(total_widths(side), nil, nil, side, {})
               end
               pcall(del_autocmd, autocmd)
             end,
